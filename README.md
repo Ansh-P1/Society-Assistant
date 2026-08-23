@@ -1,0 +1,65 @@
+# Society Maintenance Tracker
+
+A platform for apartment societies to manage maintenance complaints:
+residents raise and track complaints with photos, admins manage them through
+a status workflow with priorities and overdue flagging, and everyone stays
+informed via a notice board and email updates.
+
+## Stack
+
+- **Backend:** Node.js + Express
+- **Database:** PostgreSQL, accessed via [`pg`](https://node-postgres.com/)
+  (the plain node-postgres client) rather than an ORM like Prisma. Chosen so
+  the append-only status-history model and overdue-detection queries (see
+  `.claude/skills/complaint-lifecycle` and `.claude/skills/db-schema`) can be
+  written as explicit SQL/migrations without an ORM abstracting over the
+  append-only constraint.
+- **Frontend:** React, scaffolded with [Vite](https://vitejs.dev/)
+- **Auth:** JWT-based, role-guarded for `resident` vs `admin` (see
+  `.claude/skills/api-conventions`)
+
+## Project structure
+
+```
+/server   Express API (src/app.js, src/index.js, src/config, src/db, src/routes)
+/client   React app (Vite)
+```
+
+## Setup
+
+Prerequisites: Node.js 22+, a running local PostgreSQL instance.
+
+### Backend
+
+```bash
+cd server
+npm install
+cp .env.example .env   # fill in DB_URL, JWT_SECRET, EMAIL_*, etc.
+npm run dev             # starts on PORT (default 4000)
+```
+
+Verify it's up: `GET http://localhost:4000/api/health` should return
+`{ "status": "ok" }`.
+
+### Frontend
+
+```bash
+cd client
+npm install
+npm run dev             # starts the Vite dev server
+```
+
+## Docs
+
+- [`docs/API.md`](docs/API.md) — API endpoint reference (TODO: populated as
+  endpoints are added)
+- [`docs/SCHEMA.md`](docs/SCHEMA.md) — database schema reference (TODO:
+  populated as tables are added)
+
+## Features
+
+TODO — filled in as features are built.
+
+## Deployment
+
+TODO — filled in once deployed.
