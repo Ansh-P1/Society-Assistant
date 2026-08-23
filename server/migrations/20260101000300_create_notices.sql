@@ -1,0 +1,8 @@
+CREATE TABLE notices (
+  id SERIAL PRIMARY KEY,
+  admin_id INTEGER NOT NULL REFERENCES users(id),
+  title VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  is_important BOOLEAN NOT NULL DEFAULT false,
+  posted_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
