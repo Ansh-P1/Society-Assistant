@@ -333,6 +333,30 @@ every request.
     between 1 and 365
   - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
 
+### `GET /api/admin/dashboard`
+
+Aggregate counts for a simple admin dashboard: complaints grouped by
+status, grouped by category, and the overdue count. `by_status` and
+`by_category` are always fully key-filled (every status/category appears,
+even at `0`) — the frontend never has to guess which keys exist.
+`overdue_count` uses the exact same logic (and live `settings` threshold)
+as `GET /api/admin/complaints/overdue-count` — both read through the same
+shared helper, so they can never disagree.
+
+- **Auth:** admin
+- **Success response `200`:**
+  ```json
+  {
+    "by_status": { "Open": 5, "In Progress": 3, "Resolved": 12 },
+    "by_category": {
+      "Plumbing": 4, "Electrical": 2, "Cleanliness": 3, "Security": 1,
+      "Structural": 0, "Elevator": 0, "Parking": 0, "Other": 0
+    },
+    "overdue_count": 3
+  }
+  ```
+- **Errors:** `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
 ## Notices
 
 The notice board. Both roles can read it; only admins can post.

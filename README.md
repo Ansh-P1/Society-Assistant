@@ -77,8 +77,8 @@ npm run dev             # starts the Vite dev server
 - Email notifications (see `docs/EMAIL_SETUP.md`): residents are emailed
   when their complaint's status changes, and when an admin posts an
   important notice
-
-Still TODO: admin dashboard (aggregate counts/reporting).
+- Admin dashboard: complaint counts by status and category, plus the
+  overdue count, as simple stat cards
 
 ### Photo storage
 

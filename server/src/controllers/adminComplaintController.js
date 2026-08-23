@@ -83,15 +83,22 @@ async function listComplaints(req, res, next) {
   }
 }
 
+// Shared with adminDashboardController.js, so both endpoints count overdue
+// complaints the exact same way instead of drifting apart over two queries.
+async function countOverdueComplaints() {
+  const thresholdDays = await getOverdueThresholdDays();
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) FROM complaints
+     WHERE status != 'Resolved' AND created_at < now() - ($1::text || ' days')::interval`,
+    [thresholdDays],
+  );
+  return parseInt(rows[0].count, 10);
+}
+
 async function getOverdueCount(req, res, next) {
   try {
-    const thresholdDays = await getOverdueThresholdDays();
-    const { rows } = await pool.query(
-      `SELECT COUNT(*) FROM complaints
-       WHERE status != 'Resolved' AND created_at < now() - ($1::text || ' days')::interval`,
-      [thresholdDays],
-    );
-    res.json({ overdue_count: parseInt(rows[0].count, 10) });
+    const overdueCount = await countOverdueComplaints();
+    res.json({ overdue_count: overdueCount });
   } catch (err) {
     next(err);
   }
@@ -246,4 +253,6 @@ async function updatePriority(req, res, next) {
   }
 }
 
-module.exports = { listComplaints, updatePriority, updateStatus, getOverdueCount };
+module.exports = {
+  listComplaints, updatePriority, updateStatus, getOverdueCount, countOverdueComplaints,
+};

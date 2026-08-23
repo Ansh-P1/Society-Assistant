@@ -115,3 +115,7 @@ export function createNotice({ title, body, isImportant }, token) {
 export function getNotices(token) {
   return request('/api/notices', { token });
 }
+
+export function getAdminDashboard(token) {
+  return request('/api/admin/dashboard', { token });
+}
