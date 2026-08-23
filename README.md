@@ -271,14 +271,13 @@ Blueprint-as-code equivalent as clean as Render's for a repo like this).
 
 ### Live URLs
 
-Not yet deployed — this repo has the Blueprint and steps above ready to
-go, but no one has run through them yet. Once deployed, this section
-should read:
+- **API:** [`https://society-tracker-api-43az.onrender.com`](https://society-tracker-api-43az.onrender.com)
+  (`-43az` because `society-tracker-api` was already taken) — verified
+  live: health check, register, login, and raise-a-complaint all confirmed
+  working end-to-end against this URL and its production database.
+- **App:** TODO — pending the deployed frontend's URL.
 
-- API: `https://society-tracker-api.onrender.com` (health check:
-  `/api/health`)
-- App: `https://society-tracker-client.onrender.com`
-
-(Render's default subdomains for the service names in `render.yaml` —
-update both if your deployment ended up with different ones, e.g. from a
-name collision.)
+Note: the deployed database initially failed every query with `ECONNRESET`
+— the `pg` Pool had no SSL config, which Render's Postgres requires. Fixed
+in `server/src/db/index.js` (SSL enabled unless `DB_URL` points at
+localhost) and confirmed working after redeploy.
