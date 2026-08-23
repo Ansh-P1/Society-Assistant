@@ -5,6 +5,7 @@ const authRouter = require('./routes/auth');
 const complaintsRouter = require('./routes/complaints');
 const adminComplaintsRouter = require('./routes/adminComplaints');
 const adminSettingsRouter = require('./routes/adminSettings');
+const noticesRouter = require('./routes/notices');
 const { UPLOADS_DIR } = require('./middleware/upload');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -19,6 +20,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/complaints', complaintsRouter);
 app.use('/api/admin/complaints', adminComplaintsRouter);
 app.use('/api/admin/settings', adminSettingsRouter);
+app.use('/api/notices', noticesRouter);
 
 app.use(errorHandler);
 

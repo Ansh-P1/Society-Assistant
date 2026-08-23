@@ -89,8 +89,10 @@ Admin-posted notices for the notice board.
 | `is_important`   | `BOOLEAN NOT NULL DEFAULT false`   | pinned to top when true      |
 | `posted_at`      | `TIMESTAMPTZ NOT NULL DEFAULT now()` |                             |
 
-**Indexes:** none yet - `(is_important, created_at)` is recommended once the
-notice board endpoint is built (see `.claude/skills/db-schema`).
+**Indexes:** none yet. `GET /api/notices` (see `docs/API.md`) now exists and
+sorts on `(is_important, posted_at)`, so that composite index is worth
+adding once the notice board's row count makes it matter (see
+`.claude/skills/db-schema`).
 
 ## settings
 

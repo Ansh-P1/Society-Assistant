@@ -16,7 +16,8 @@ function ResidentDashboard() {
       <p>Welcome, {auth?.user?.name}.</p>
       <p>
         <Link to="/complaints/new">Raise a complaint</Link> ·{' '}
-        <Link to="/complaints">My complaints</Link>
+        <Link to="/complaints">My complaints</Link> ·{' '}
+        <Link to="/notices">Notice board</Link>
       </p>
       <button onClick={handleLogout}>Log out</button>
     </div>

@@ -330,7 +330,59 @@ every request.
     between 1 and 365
   - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
 
+## Notices
+
+The notice board. Both roles can read it; only admins can post.
+
+### `POST /api/notices`
+
+Admin-only.
+
+- **Auth:** admin
+- **Request body:**
+  ```json
+  { "title": "Fire drill Friday", "body": "Mandatory evacuation drill at 3pm.", "is_important": true }
+  ```
+  `is_important` is optional, defaults to `false`.
+- **Success response `201`:**
+  ```json
+  {
+    "notice": {
+      "id": 3, "admin_id": 2, "title": "Fire drill Friday",
+      "body": "Mandatory evacuation drill at 3pm.", "is_important": true,
+      "posted_at": "2026-08-19T09:00:00.000Z"
+    }
+  }
+  ```
+- **Errors:**
+  - `400 VALIDATION_ERROR` — missing/empty `title` (max 255 chars) or `body`
+    (max 2000 chars), or `is_important` present but not a boolean
+  - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
+### `GET /api/notices`
+
+Resident or admin — no role restriction, any authenticated user can read
+the board. Important notices are pinned to the top; within each group
+(important / not important), most recently posted first.
+
+- **Auth:** resident or admin
+- **Query params:** `page` (default `1`), `limit` (default `20`, max `100`)
+- **Success response `200`:**
+  ```json
+  {
+    "data": [
+      {
+        "id": 3, "admin_id": 2, "posted_by_name": "Admin User",
+        "title": "Fire drill Friday", "body": "Mandatory evacuation drill at 3pm.",
+        "is_important": true, "posted_at": "2026-08-19T09:00:00.000Z"
+      }
+    ],
+    "pagination": { "page": 1, "limit": 20, "total": 1, "totalPages": 1 }
+  }
+  ```
+- **Errors:** `401 UNAUTHORIZED` — see shared auth errors above
+
 ---
 
-Further endpoints (notice board, dashboard) are documented here as they
-are built.
+Further endpoints (dashboard, email notifications) are documented here as
+they are built.

@@ -103,3 +103,15 @@ export function updateAdminSettings(overdueThresholdDays, token) {
     token,
   });
 }
+
+export function createNotice({ title, body, isImportant }, token) {
+  return request('/api/notices', {
+    method: 'POST',
+    body: { title, body, is_important: isImportant },
+    token,
+  });
+}
+
+export function getNotices(token) {
+  return request('/api/notices', { token });
+}

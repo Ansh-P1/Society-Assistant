@@ -9,6 +9,8 @@ import ComplaintDetail from './pages/ComplaintDetail';
 import AdminComplaints from './pages/AdminComplaints';
 import AdminComplaintDetail from './pages/AdminComplaintDetail';
 import AdminSettings from './pages/AdminSettings';
+import NoticeBoard from './pages/NoticeBoard';
+import AdminPostNotice from './pages/AdminPostNotice';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -79,6 +81,22 @@ function App() {
         element={
           <ProtectedRoute role="admin">
             <AdminSettings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notices"
+        element={
+          <ProtectedRoute>
+            <NoticeBoard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/notices/new"
+        element={
+          <ProtectedRoute role="admin">
+            <AdminPostNotice />
           </ProtectedRoute>
         }
       />
