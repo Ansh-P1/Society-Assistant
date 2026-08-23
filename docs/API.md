@@ -166,6 +166,74 @@ resident may only fetch their own complaints.
   - `404 NOT_FOUND` — no complaint with that id exists
   - `401 UNAUTHORIZED` — see shared auth errors above
 
+## Admin
+
+All routes below are admin-only and mounted under `/api/admin`.
+
+### `GET /api/admin/complaints`
+
+Lists every complaint (all residents), with filtering and pagination. Each
+row is flagged `is_overdue` per the logic in
+`.claude/skills/complaint-lifecycle/SKILL.md`
+(`status != 'Resolved' AND now() - created_at > OVERDUE_THRESHOLD_DAYS`,
+computed at query time, never stored). Results sort overdue complaints to
+the top by default, then by most recently created.
+
+- **Auth:** admin
+- **Query params (all optional):**
+  - `status` — one of `Open`, `In Progress`, `Resolved`
+  - `category` — one of the standard categories (see `POST /api/complaints`)
+  - `date_from` / `date_to` — `YYYY-MM-DD`, inclusive on both ends, filters
+    on `created_at`
+  - `page` (default `1`), `limit` (default `20`, max `100`)
+- **Success response `200`:**
+  ```json
+  {
+    "data": [
+      {
+        "id": 1, "resident_id": 3, "resident_name": "Asha Kulkarni",
+        "category": "Plumbing", "description": "Kitchen sink is leaking continuously.",
+        "photo_url": null, "priority": "Low", "status": "Open",
+        "created_at": "2026-08-10T09:00:00.000Z", "resolved_at": null,
+        "is_overdue": true
+      }
+    ],
+    "pagination": { "page": 1, "limit": 20, "total": 1, "totalPages": 1 }
+  }
+  ```
+- **Errors:**
+  - `400 VALIDATION_ERROR` — invalid `status`/`category` value, or
+    `date_from`/`date_to` not in `YYYY-MM-DD` format
+  - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
+### `PATCH /api/admin/complaints/:id/priority`
+
+Sets a complaint's priority. This is a plain field update — unlike status
+changes, priority changes are not recorded in `complaint_status_history`
+(that table only tracks the `Open`/`In Progress`/`Resolved` lifecycle).
+
+- **Auth:** admin
+- **Request body:**
+  ```json
+  { "priority": "High" }
+  ```
+- **Success response `200`:**
+  ```json
+  {
+    "complaint": {
+      "id": 1, "resident_id": 3, "category": "Plumbing",
+      "description": "Kitchen sink is leaking continuously.",
+      "photo_url": null, "priority": "High", "status": "Open",
+      "created_at": "2026-08-10T09:00:00.000Z", "resolved_at": null
+    }
+  }
+  ```
+- **Errors:**
+  - `400 VALIDATION_ERROR` — `:id` isn't numeric, or `priority` isn't one of
+    `Low`, `Medium`, `High`
+  - `404 NOT_FOUND` — no complaint with that id exists
+  - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
 ---
 
 Further endpoints (complaint/notice status updates, notice board, dashboard)

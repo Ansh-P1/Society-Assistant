@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getAuth, clearAuth } from '../utils/auth';
 
 function AdminDashboard() {
@@ -14,7 +14,10 @@ function AdminDashboard() {
     <div>
       <h1>Admin dashboard</h1>
       <p>Welcome, {auth?.user?.name}.</p>
-      <p>Complaint management and reporting are coming in a future update.</p>
+      <p>
+        <Link to="/admin/complaints">All complaints</Link>
+      </p>
+      <p>Reporting is coming in a future update.</p>
       <button onClick={handleLogout}>Log out</button>
     </div>
   );

@@ -78,6 +78,54 @@
   margin: 2rem auto;
 }
 
+.admin-page {
+  max-width: 900px;
+  margin: 2rem auto;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.filters select,
+.filters input {
+  padding: 0.4rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.overdue-row {
+  background: #fff8f8;
+}
+
+.overdue-row td:last-child {
+  color: #c0392b;
+  font-weight: 600;
+}
+
 .status {
   display: inline-block;
   padding: 0.15rem 0.5rem;

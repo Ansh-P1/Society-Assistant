@@ -68,3 +68,18 @@ export function getMyComplaints(token) {
 export function getComplaint(id, token) {
   return request(`/api/complaints/${id}`, { token });
 }
+
+export function getAdminComplaints(filters, token) {
+  const params = new URLSearchParams();
+  Object.entries(filters || {}).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
+  const query = params.toString();
+  return request(`/api/admin/complaints${query ? `?${query}` : ''}`, { token });
+}
+
+export function updateComplaintPriority(id, priority, token) {
+  return request(`/api/admin/complaints/${id}/priority`, { method: 'PATCH', body: { priority }, token });
+}

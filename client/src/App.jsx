@@ -6,6 +6,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import NewComplaint from './pages/NewComplaint';
 import MyComplaints from './pages/MyComplaints';
 import ComplaintDetail from './pages/ComplaintDetail';
+import AdminComplaints from './pages/AdminComplaints';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -52,6 +53,14 @@ function App() {
         element={
           <ProtectedRoute role="admin">
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/complaints"
+        element={
+          <ProtectedRoute role="admin">
+            <AdminComplaints />
           </ProtectedRoute>
         }
       />
