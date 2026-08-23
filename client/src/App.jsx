@@ -8,6 +8,7 @@ import MyComplaints from './pages/MyComplaints';
 import ComplaintDetail from './pages/ComplaintDetail';
 import AdminComplaints from './pages/AdminComplaints';
 import AdminComplaintDetail from './pages/AdminComplaintDetail';
+import AdminSettings from './pages/AdminSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -70,6 +71,14 @@ function App() {
         element={
           <ProtectedRoute role="admin">
             <AdminComplaintDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute role="admin">
+            <AdminSettings />
           </ProtectedRoute>
         }
       />

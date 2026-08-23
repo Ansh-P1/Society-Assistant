@@ -57,7 +57,8 @@
   opacity: 0.7;
 }
 
-.auth-page .hint {
+.auth-page .hint,
+.form-page .hint {
   color: #666;
   font-size: 0.9rem;
 }

@@ -91,3 +91,22 @@ Admin-posted notices for the notice board.
 
 **Indexes:** none yet - `(is_important, created_at)` is recommended once the
 notice board endpoint is built (see `.claude/skills/db-schema`).
+
+## settings
+
+Single-row, admin-editable app config. Currently holds only the overdue
+threshold, read by `server/src/services/settingsService.js` and used by
+the overdue calculation in `GET /api/admin/complaints` and
+`GET /api/admin/complaints/overdue-count` — see
+`.claude/skills/complaint-lifecycle/SKILL.md`. This replaced the
+`OVERDUE_THRESHOLD_DAYS` env var from earlier prompts, so admins can tune
+it at runtime via `PATCH /api/admin/settings` without a redeploy.
+
+| column                    | type                              | notes                             |
+|----------------------------|------------------------------------|---------------------------------------|
+| `id`                       | `SMALLINT PRIMARY KEY DEFAULT 1`   | pinned to `1` via `CHECK (id = 1)` - guarantees exactly one row ever exists |
+| `overdue_threshold_days`   | `INTEGER NOT NULL DEFAULT 7`       | validated as an integer, 1-365, at the API layer |
+| `created_at`               | `TIMESTAMPTZ NOT NULL DEFAULT now()` |                                      |
+| `updated_at`                | `TIMESTAMPTZ NOT NULL DEFAULT now()` | set on every `PATCH` - unlike the append-only tables above, this row is genuinely updated in place |
+
+**Indexes:** none - a single-row table never benefits from one.

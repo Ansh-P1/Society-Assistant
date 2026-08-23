@@ -15,7 +15,7 @@ function AdminDashboard() {
       <h1>Admin dashboard</h1>
       <p>Welcome, {auth?.user?.name}.</p>
       <p>
-        <Link to="/admin/complaints">All complaints</Link>
+        <Link to="/admin/complaints">All complaints</Link> · <Link to="/admin/settings">Settings</Link>
       </p>
       <p>Reporting is coming in a future update.</p>
       <button onClick={handleLogout}>Log out</button>

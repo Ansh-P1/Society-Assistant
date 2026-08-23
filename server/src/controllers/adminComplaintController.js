@@ -1,7 +1,7 @@
 const { pool } = require('../db');
-const config = require('../config');
 const { CATEGORIES } = require('../constants/categories');
 const { STATUSES, PRIORITIES } = require('../constants/statuses');
+const { getOverdueThresholdDays } = require('../services/settingsService');
 
 const DATE_FORMAT_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DEFAULT_PAGE_LIMIT = 20;
@@ -50,6 +50,7 @@ async function listComplaints(req, res, next) {
 
     const { page, limit, offset } = parsePagination(req.query);
     const filterParams = [status || null, category || null, dateFrom || null, dateTo || null];
+    const thresholdDays = await getOverdueThresholdDays();
 
     const [{ rows }, countResult] = await Promise.all([
       pool.query(
@@ -62,7 +63,7 @@ async function listComplaints(req, res, next) {
          WHERE ${FILTER_WHERE}
          ORDER BY is_overdue DESC, c.created_at DESC
          LIMIT $6 OFFSET $7`,
-        [...filterParams, config.overdueThresholdDays, limit, offset],
+        [...filterParams, thresholdDays, limit, offset],
       ),
       pool.query(
         `SELECT COUNT(*) FROM complaints c WHERE ${FILTER_WHERE}`,
@@ -76,6 +77,20 @@ async function listComplaints(req, res, next) {
       data: rows,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) || 0 },
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getOverdueCount(req, res, next) {
+  try {
+    const thresholdDays = await getOverdueThresholdDays();
+    const { rows } = await pool.query(
+      `SELECT COUNT(*) FROM complaints
+       WHERE status != 'Resolved' AND created_at < now() - ($1::text || ' days')::interval`,
+      [thresholdDays],
+    );
+    res.json({ overdue_count: parseInt(rows[0].count, 10) });
   } catch (err) {
     next(err);
   }
@@ -209,4 +224,4 @@ async function updatePriority(req, res, next) {
   }
 }
 
-module.exports = { listComplaints, updatePriority, updateStatus };
+module.exports = { listComplaints, updatePriority, updateStatus, getOverdueCount };

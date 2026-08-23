@@ -72,8 +72,11 @@ status != 'Resolved' AND (now - created_at) > threshold_days
 
 Notes:
 
-- `threshold_days` is a configurable value (not hardcoded), read from config/
-  env so admins can tune it without a code change.
+- `threshold_days` is a configurable value (not hardcoded), read from the
+  single-row `settings` table (`overdue_threshold_days`, see
+  `.claude/skills/db-schema` and `docs/SCHEMA.md`) via
+  `server/src/services/settingsService.js`. Admins tune it at runtime through
+  `PATCH /api/admin/settings` - no code change or restart required.
 - Overdue is a computed property, not a stored column - it must never go
   stale. Compute it at query/read time (e.g. in the SQL query or in the
   response serializer), not written to the row on a schedule.

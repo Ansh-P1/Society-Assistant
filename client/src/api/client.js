@@ -91,3 +91,15 @@ export function updateComplaintStatus(id, toStatus, note, token) {
     token,
   });
 }
+
+export function getAdminSettings(token) {
+  return request('/api/admin/settings', { token });
+}
+
+export function updateAdminSettings(overdueThresholdDays, token) {
+  return request('/api/admin/settings', {
+    method: 'PATCH',
+    body: { overdue_threshold_days: overdueThresholdDays },
+    token,
+  });
+}

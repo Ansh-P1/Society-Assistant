@@ -54,9 +54,6 @@ EMAIL_PORT=
 EMAIL_USER=
 EMAIL_PASS=
 EMAIL_FROM=
-
-# App config
-OVERDUE_THRESHOLD_DAYS=7
 ```
 
 Never commit an actual secret here - placeholders or obviously-fake values

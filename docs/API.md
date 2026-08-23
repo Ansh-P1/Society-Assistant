@@ -178,9 +178,11 @@ All routes below are admin-only and mounted under `/api/admin`.
 Lists every complaint (all residents), with filtering and pagination. Each
 row is flagged `is_overdue` per the logic in
 `.claude/skills/complaint-lifecycle/SKILL.md`
-(`status != 'Resolved' AND now() - created_at > OVERDUE_THRESHOLD_DAYS`,
-computed at query time, never stored). Results sort overdue complaints to
-the top by default, then by most recently created.
+(`status != 'Resolved' AND now() - created_at > threshold`, computed at
+query time, never stored). The threshold is read live from the `settings`
+table (see `GET`/`PATCH /api/admin/settings` below) — not a hardcoded
+constant or env var. Results sort overdue complaints to the top by
+default, then by most recently created.
 
 - **Auth:** admin
 - **Query params (all optional):**
@@ -208,6 +210,19 @@ the top by default, then by most recently created.
   - `400 VALIDATION_ERROR` — invalid `status`/`category` value, or
     `date_from`/`date_to` not in `YYYY-MM-DD` format
   - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
+### `GET /api/admin/complaints/overdue-count`
+
+Convenience endpoint — just the count, using the same live threshold and
+`status != 'Resolved'` logic as `is_overdue` above. Intended for the admin
+dashboard (a future prompt), so it doesn't need the full listing payload.
+
+- **Auth:** admin
+- **Success response `200`:**
+  ```json
+  { "overdue_count": 3 }
+  ```
+- **Errors:** `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
 
 ### `PATCH /api/admin/complaints/:id/priority`
 
@@ -282,6 +297,37 @@ Transitions a complaint's status, enforcing the rules in
     the message says specifically why (e.g. "A resolved complaint is
     closed and cannot be changed further")
   - `404 NOT_FOUND` — no complaint with that id exists
+  - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
+### `GET /api/admin/settings`
+
+- **Auth:** admin
+- **Success response `200`:**
+  ```json
+  { "settings": { "overdue_threshold_days": 7, "updated_at": "2026-08-20T00:00:00.000Z" } }
+  ```
+- **Errors:** `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
+### `PATCH /api/admin/settings`
+
+Updates the overdue threshold used everywhere overdue status is computed
+(`GET /api/admin/complaints`'s `is_overdue` flag and
+`GET /api/admin/complaints/overdue-count`) — takes effect immediately, no
+restart needed, since those endpoints read the `settings` table live on
+every request.
+
+- **Auth:** admin
+- **Request body:**
+  ```json
+  { "overdue_threshold_days": 10 }
+  ```
+- **Success response `200`:**
+  ```json
+  { "settings": { "overdue_threshold_days": 10, "updated_at": "2026-08-23T10:00:00.000Z" } }
+  ```
+- **Errors:**
+  - `400 VALIDATION_ERROR` — `overdue_threshold_days` isn't an integer
+    between 1 and 365
   - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
 
 ---

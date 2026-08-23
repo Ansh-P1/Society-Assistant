@@ -11,7 +11,6 @@ const config = {
     pass: process.env.EMAIL_PASS,
     from: process.env.EMAIL_FROM,
   },
-  overdueThresholdDays: parseInt(process.env.OVERDUE_THRESHOLD_DAYS || '7', 10),
 };
 
 module.exports = config;
