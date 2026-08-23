@@ -271,13 +271,28 @@ Blueprint-as-code equivalent as clean as Render's for a repo like this).
 
 ### Live URLs
 
+- **App:** [`https://society-tracker-client.onrender.com`](https://society-tracker-client.onrender.com)
 - **API:** [`https://society-tracker-api-43az.onrender.com`](https://society-tracker-api-43az.onrender.com)
-  (`-43az` because `society-tracker-api` was already taken) — verified
-  live: health check, register, login, and raise-a-complaint all confirmed
-  working end-to-end against this URL and its production database.
-- **App:** TODO — pending the deployed frontend's URL.
+  (`-43az` because `society-tracker-api` was already taken)
+- Seeded login: `asha@society.test` / `password123` (resident),
+  `admin@society.test` / `password123` (admin) — see
+  [Set up the database](#3-set-up-the-database) above for the full list.
 
-Note: the deployed database initially failed every query with `ECONNRESET`
-— the `pg` Pool had no SSL config, which Render's Postgres requires. Fixed
-in `server/src/db/index.js` (SSL enabled unless `DB_URL` points at
-localhost) and confirmed working after redeploy.
+Verified end-to-end against the live deployment, driving a real browser
+against the real URL (not mocked): login, viewing the complaint list,
+raising a complaint through the actual UI, admin login, the admin
+dashboard's stat cards, and the notice board all confirmed working, with
+zero browser console errors.
+
+Two real issues were hit and fixed along the way, both now live:
+
+- The `pg` Pool had no SSL config, and Render's Postgres requires it —
+  every database query failed with `ECONNRESET` until this was fixed in
+  `server/src/db/index.js` (SSL enabled unless `DB_URL` points at
+  localhost).
+- `render.yaml`'s `VITE_API_URL` pointed at the API's originally-intended
+  subdomain, but Render assigned it `-43az` instead (name collision) —
+  since Vite bakes this in at build time, the deployed client was calling
+  a URL that resolved to nothing, surfacing in the browser as a CORS
+  error. Fixed by correcting the value in `render.yaml` and letting
+  Render's Blueprint sync rebuild the client.
