@@ -200,14 +200,85 @@ with one of the seeded accounts above (or register a new resident).
 
 Uploaded complaint photos are currently written to local disk at
 `server/uploads/` and served statically at `/uploads/<filename>`. This is
-fine for local development but doesn't survive redeploys on most hosting
-platforms (e.g. Render/Railway's filesystem is ephemeral) and doesn't scale
-across multiple server instances. Before production, swap
-`server/src/middleware/upload.js`'s disk storage for an S3-compatible
-bucket or a service like Cloudinary — the rest of the app only depends on
-`complaints.photo_url` being a fetchable URL, so the swap is isolated to
-that one file plus wherever `photo_url` gets built.
+fine for local development, but **on the Render deployment described
+below, it does not actually work**: Render's free/standard web services
+have an ephemeral filesystem — anything written to disk is wiped on every
+deploy and every time the service restarts (including free-tier spin-down/
+spin-up). A photo uploaded today may be gone tomorrow, or after the next
+`git push`. This is a known, deliberate limitation, not an oversight —
+fixing it is a real code change, out of scope for a deployment-config-only
+commit.
+
+**Production fix:** swap `server/src/middleware/upload.js`'s
+`multer.diskStorage` for an S3-compatible bucket (e.g. AWS S3, Cloudflare
+R2, or Render's own persistent disks on a paid plan) or a service like
+Cloudinary. The rest of the app only depends on `complaints.photo_url`
+being a fetchable URL string, so the swap is isolated to that one file
+plus wherever `photo_url` gets built in `complaintController.js` — nothing
+else needs to change.
 
 ## Deployment
 
-TODO — filled in once deployed.
+Hosted on [Render](https://render.com), via the `render.yaml` Blueprint at
+the repo root — one file that provisions all three pieces (API web
+service, static frontend, Postgres database) together, which is why Render
+was picked over Vercel (great for static frontends, but not built for a
+persistent Express server or a bundled Postgres instance) or Railway (no
+Blueprint-as-code equivalent as clean as Render's for a repo like this).
+
+### Deploy steps
+
+1. Push this repo to GitHub (already done if you're reading this on
+   [Society-Assistant](https://github.com/Ansh-P1/Society-Assistant)).
+2. In the [Render dashboard](https://dashboard.render.com): **New +** →
+   **Blueprint** → connect this GitHub repo. Render reads `render.yaml`
+   and proposes three resources: `society-tracker-api` (web service),
+   `society-tracker-client` (static site), `society-tracker-db`
+   (PostgreSQL, free tier).
+3. Before clicking **Apply**, fill in the `EMAIL_*` environment variables
+   on `society-tracker-api` if you want email notifications live (see
+   `docs/EMAIL_SETUP.md`) — they're intentionally left blank in
+   `render.yaml` (`sync: false`) so no real credentials ever sit in the
+   repo. `DB_URL` and `JWT_SECRET` are generated/wired automatically by
+   the Blueprint; leave those alone.
+4. Click **Apply**. Render builds and deploys both services — a few
+   minutes each.
+5. Run the database migrations (and optionally seed data) against the
+   live database once. Two ways to do this:
+   - **From your own machine:** in the Render dashboard, open
+     `society-tracker-db` → copy the **External Database URL** → then:
+     ```bash
+     cd server
+     DB_URL="<external-database-url>" npm run migrate
+     DB_URL="<external-database-url>" npm run seed   # optional
+     ```
+   - **From Render's Shell tab:** open `society-tracker-api` → **Shell**
+     → `npm run migrate` (and `npm run seed` if wanted). `DB_URL` is
+     already set correctly in that environment.
+6. If Render assigned `society-tracker-api` a different subdomain than
+   expected (e.g. the name was taken), update `VITE_API_URL` on
+   `society-tracker-client` to match, then trigger a manual redeploy of
+   that service — Vite bakes this value in at build time, so just editing
+   the env var isn't enough on its own.
+
+### Free-tier caveats
+
+- **Cold starts:** free web services spin down after 15 minutes of no
+  traffic; the first request after that takes 30-60s to wake back up.
+- **Database expiry:** Render's free Postgres databases are deleted after
+  90 days unless upgraded to a paid plan.
+- **Photo uploads don't persist** — see [Photo storage](#photo-storage) above.
+
+### Live URLs
+
+Not yet deployed — this repo has the Blueprint and steps above ready to
+go, but no one has run through them yet. Once deployed, this section
+should read:
+
+- API: `https://society-tracker-api.onrender.com` (health check:
+  `/api/health`)
+- App: `https://society-tracker-client.onrender.com`
+
+(Render's default subdomains for the service names in `render.yaml` —
+update both if your deployment ended up with different ones, e.g. from a
+name collision.)

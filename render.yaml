@@ -1,0 +1,62 @@
+databases:
+  - name: society-tracker-db
+    databaseName: society_tracker
+    plan: free
+
+services:
+  # Backend API (Express)
+  - type: web
+    name: society-tracker-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.11.0
+      - key: DB_URL
+        fromDatabase:
+          name: society-tracker-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      # Render injects PORT automatically for web services - do not set it here.
+      # Email is optional; the app runs fine without it (see docs/EMAIL_SETUP.md),
+      # it just skips sending and logs why. Fill these in via the Render
+      # dashboard after the first deploy - they're marked sync: false so
+      # render.yaml never carries real credentials.
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+  # Frontend (React, built by Vite, served as a static site)
+  - type: web
+    name: society-tracker-client
+    runtime: static
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22.11.0
+      # Vite bakes this into the built JS at build time, so it must be set
+      # here (not just in client/.env, which never reaches Render). Update
+      # this if Render assigns society-tracker-api a different subdomain
+      # (e.g. on a name collision), then trigger a redeploy of this service.
+      - key: VITE_API_URL
+        value: https://society-tracker-api.onrender.com
+    routes:
+      # React Router client-side routing - every path serves index.html so
+      # deep links (e.g. /admin/complaints/5) and page refreshes don't 404.
+      - type: rewrite
+        source: /*
+        destination: /index.html

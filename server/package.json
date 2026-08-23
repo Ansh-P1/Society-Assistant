@@ -4,6 +4,9 @@
   "private": true,
   "description": "Backend API for the Society Maintenance Tracker",
   "main": "src/index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
