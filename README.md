@@ -17,6 +17,11 @@ informed via a notice board and email updates.
 - **Frontend:** React, scaffolded with [Vite](https://vitejs.dev/)
 - **Auth:** JWT-based, role-guarded for `resident` vs `admin` (see
   `.claude/skills/api-conventions`)
+- **Email:** [Nodemailer](https://nodemailer.com/) over plain SMTP (not a
+  provider-specific SDK), so any SMTP-capable free-tier provider works -
+  see [`docs/EMAIL_SETUP.md`](docs/EMAIL_SETUP.md) for how to get
+  credentials (Gmail app password is the recommended default) and what to
+  set in `.env`.
 
 ## Project structure
 
@@ -54,14 +59,26 @@ npm run dev             # starts the Vite dev server
 
 - [`docs/API.md`](docs/API.md) — API endpoint reference
 - [`docs/SCHEMA.md`](docs/SCHEMA.md) — database schema reference
+- [`docs/EMAIL_SETUP.md`](docs/EMAIL_SETUP.md) — how to configure email
+  notifications
 
 ## Features
 
 - Resident registration/login, admin login (JWT-based, role-guarded)
-- Residents can raise a complaint (category, description, optional photo)
+- Residents can raise a complaint (category, description, optional photo),
+  view their own complaints, and see each one's full status history
+- Admin can list/filter all complaints (status, category, date range), set
+  priority, and transition status (`Open` → `In Progress` → `Resolved`,
+  enforced strictly — see `.claude/skills/complaint-lifecycle`)
+- Overdue detection with an admin-configurable threshold (`/admin/settings`)
+  — overdue complaints sort to the top of the admin list
+- Notice board, readable by both roles; admins can post notices and pin
+  important ones to the top
+- Email notifications (see `docs/EMAIL_SETUP.md`): residents are emailed
+  when their complaint's status changes, and when an admin posts an
+  important notice
 
-Still TODO: complaint listing/status updates, overdue flagging, notice
-board, email notifications, admin dashboard.
+Still TODO: admin dashboard (aggregate counts/reporting).
 
 ### Photo storage
 

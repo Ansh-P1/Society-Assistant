@@ -2,6 +2,7 @@ const { pool } = require('../db');
 const { CATEGORIES } = require('../constants/categories');
 const { STATUSES, PRIORITIES } = require('../constants/statuses');
 const { getOverdueThresholdDays } = require('../services/settingsService');
+const { sendStatusChangeEmail } = require('../services/emailService');
 
 const DATE_FORMAT_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DEFAULT_PAGE_LIMIT = 20;
@@ -177,6 +178,27 @@ async function updateStatus(req, res, next) {
       );
 
       await client.query('COMMIT');
+
+      // Fire-and-forget notification - not awaited, and errors are caught
+      // inside emailService itself, so this can never delay or break the
+      // response. Uses `pool`, not `client`, since `client` is released
+      // right after this block and the transaction is already committed.
+      pool.query('SELECT email, name FROM users WHERE id = $1', [updatedRows[0].resident_id])
+        .then(({ rows: residentRows }) => {
+          const resident = residentRows[0];
+          if (resident) {
+            sendStatusChangeEmail({
+              to: resident.email,
+              residentName: resident.name,
+              complaint: updatedRows[0],
+              fromStatus,
+              toStatus,
+              note,
+            });
+          }
+        })
+        .catch((err) => console.error('[email] Failed to look up resident for status-change email:', err.message));
+
       res.json({ complaint: updatedRows[0] });
     } catch (err) {
       await client.query('ROLLBACK');

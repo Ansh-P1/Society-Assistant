@@ -272,6 +272,9 @@ Transitions a complaint's status, enforcing the rules in
   same complaint can't both apply against the same `from_status`).
 - When `to_status` is `"Resolved"`, `complaints.resolved_at` is set to
   `now()` in the same update.
+- On success, also emails the resident about the status change (see
+  `docs/EMAIL_SETUP.md`). This is fire-and-forget — not awaited, and any
+  failure is logged server-side, never surfaced in the response.
 
 - **Auth:** admin
 - **Request body:**
@@ -336,7 +339,9 @@ The notice board. Both roles can read it; only admins can post.
 
 ### `POST /api/notices`
 
-Admin-only.
+Admin-only. If `is_important` is `true`, also emails every resident (see
+`docs/EMAIL_SETUP.md`) — fire-and-forget, same as the status-change email
+above: never awaited, failures are logged, never surfaced in the response.
 
 - **Auth:** admin
 - **Request body:**

@@ -1,4 +1,5 @@
 const { pool } = require('../db');
+const { sendImportantNoticeEmail } = require('../services/emailService');
 
 const MAX_TITLE_LENGTH = 255;
 const MAX_BODY_LENGTH = 2000;
@@ -50,7 +51,21 @@ async function createNotice(req, res, next) {
       [req.user.id, title.trim(), body.trim(), isImportant],
     );
 
-    res.status(201).json({ notice: rows[0] });
+    const notice = rows[0];
+
+    if (notice.is_important) {
+      // Fire-and-forget: notify every resident, never block or fail the
+      // response - see the note on sendEmail in emailService.js.
+      pool.query("SELECT email FROM users WHERE role = 'resident'")
+        .then(({ rows: residents }) => {
+          residents.forEach((resident) => {
+            sendImportantNoticeEmail({ to: resident.email, notice });
+          });
+        })
+        .catch((err) => console.error('[email] Failed to look up residents for notice email:', err.message));
+    }
+
+    res.status(201).json({ notice });
   } catch (err) {
     next(err);
   }
