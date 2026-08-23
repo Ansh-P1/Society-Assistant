@@ -46,19 +46,34 @@ Verify it's up: `GET http://localhost:4000/api/health` should return
 ```bash
 cd client
 npm install
+cp .env.example .env   # VITE_API_URL, defaults to http://localhost:4000
 npm run dev             # starts the Vite dev server
 ```
 
 ## Docs
 
-- [`docs/API.md`](docs/API.md) — API endpoint reference (TODO: populated as
-  endpoints are added)
-- [`docs/SCHEMA.md`](docs/SCHEMA.md) — database schema reference (TODO:
-  populated as tables are added)
+- [`docs/API.md`](docs/API.md) — API endpoint reference
+- [`docs/SCHEMA.md`](docs/SCHEMA.md) — database schema reference
 
 ## Features
 
-TODO — filled in as features are built.
+- Resident registration/login, admin login (JWT-based, role-guarded)
+- Residents can raise a complaint (category, description, optional photo)
+
+Still TODO: complaint listing/status updates, overdue flagging, notice
+board, email notifications, admin dashboard.
+
+### Photo storage
+
+Uploaded complaint photos are currently written to local disk at
+`server/uploads/` and served statically at `/uploads/<filename>`. This is
+fine for local development but doesn't survive redeploys on most hosting
+platforms (e.g. Render/Railway's filesystem is ephemeral) and doesn't scale
+across multiple server instances. Before production, swap
+`server/src/middleware/upload.js`'s disk storage for an S3-compatible
+bucket or a service like Cloudinary — the rest of the app only depends on
+`complaints.photo_url` being a fetchable URL, so the swap is isolated to
+that one file plus wherever `photo_url` gets built.
 
 ## Deployment
 

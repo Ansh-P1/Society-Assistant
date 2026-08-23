@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getAuth, clearAuth } from '../utils/auth';
 
 function ResidentDashboard() {
@@ -14,7 +14,10 @@ function ResidentDashboard() {
     <div>
       <h1>Resident dashboard</h1>
       <p>Welcome, {auth?.user?.name}.</p>
-      <p>Complaint raising and tracking are coming in a future update.</p>
+      <p>
+        <Link to="/complaints/new">Raise a complaint</Link>
+      </p>
+      <p>Complaint tracking is coming in a future update.</p>
       <button onClick={handleLogout}>Log out</button>
     </div>
   );

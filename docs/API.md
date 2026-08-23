@@ -65,7 +65,49 @@ Any route behind `authenticate` / `requireRole` can also return:
 - `401 UNAUTHORIZED` — missing, malformed, invalid, or expired token
 - `403 FORBIDDEN` — valid token, but the user's role isn't allowed on this route
 
+## Complaints
+
+### `POST /api/complaints`
+
+Resident-only. Creates a complaint and, in the same transaction, its first
+`complaint_status_history` row (`from_status: null -> to_status: "Open"`,
+`actor_id` = the resident who filed it) — see
+`.claude/skills/complaint-lifecycle/SKILL.md`. New complaints always start
+as `status: "Open"`, `priority: "Low"`.
+
+- **Auth:** resident (`Authorization: Bearer <token>`)
+- **Request:** `multipart/form-data`
+  - `category` (required) — one of: `Plumbing`, `Electrical`, `Cleanliness`,
+    `Security`, `Structural`, `Elevator`, `Parking`, `Other`
+  - `description` (required) — non-empty string, max 2000 characters
+  - `photo` (optional) — JPEG/PNG/WebP image, max 5MB
+- **Success response `201`:**
+  ```json
+  {
+    "complaint": {
+      "id": 1,
+      "resident_id": 3,
+      "category": "Plumbing",
+      "description": "Kitchen sink is leaking continuously.",
+      "photo_url": "/uploads/1787503980339-133288062.png",
+      "priority": "Low",
+      "status": "Open",
+      "created_at": "2026-08-23T10:00:00.000Z",
+      "resolved_at": null
+    }
+  }
+  ```
+- **Errors:**
+  - `400 VALIDATION_ERROR` — invalid/missing category, missing/oversized
+    description, wrong photo file type, or photo over 5MB
+  - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
+Uploaded photos are currently stored on local disk under `server/uploads/`
+and served statically at `/uploads/<filename>`. This is a development-only
+choice — see the "Photo storage" note in the root README for what changes
+before production.
+
 ---
 
-Further endpoints (complaints, notices, dashboard) are documented here as
-they are built.
+Further endpoints (complaint listing/status updates, notices, dashboard) are
+documented here as they are built.
