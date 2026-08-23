@@ -10,6 +10,8 @@ router.post('/', authenticate, requireRole('resident'), uploadPhoto, createCompl
 
 // /mine must come before /:id, or Express would match "mine" as an :id.
 router.get('/mine', authenticate, requireRole('resident'), listMine);
-router.get('/:id', authenticate, requireRole('resident'), getById);
+// Both roles allowed here - getById itself enforces that a resident may
+// only fetch their own complaint, while an admin may fetch any.
+router.get('/:id', authenticate, requireRole('resident', 'admin'), getById);
 
 module.exports = router;

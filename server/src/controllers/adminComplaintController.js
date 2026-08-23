@@ -81,6 +81,99 @@ async function listComplaints(req, res, next) {
   }
 }
 
+// Per .claude/skills/complaint-lifecycle/SKILL.md: Open -> In Progress,
+// In Progress -> Resolved, and Open -> Resolved (direct resolve, no
+// intermediate step required) are the only valid transitions. Nothing
+// transitions out of Resolved - it's closed permanently.
+const VALID_TRANSITIONS = {
+  Open: ['In Progress', 'Resolved'],
+  'In Progress': ['Resolved'],
+  Resolved: [],
+};
+
+async function updateStatus(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { to_status: toStatus, note } = req.body;
+
+    if (!/^\d+$/.test(id)) {
+      return res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'id must be a number' },
+      });
+    }
+    if (!STATUSES.includes(toStatus)) {
+      return res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: `to_status must be one of: ${STATUSES.join(', ')}` },
+      });
+    }
+    if (note !== undefined && note !== null && typeof note !== 'string') {
+      return res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'note must be a string' },
+      });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Lock the row so two concurrent status updates on the same complaint
+      // can't both read the same fromStatus and both "succeed".
+      const { rows: existingRows } = await client.query(
+        'SELECT id, status FROM complaints WHERE id = $1 FOR UPDATE',
+        [id],
+      );
+      const existing = existingRows[0];
+
+      if (!existing) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({
+          error: { code: 'NOT_FOUND', message: 'Complaint not found' },
+        });
+      }
+
+      const fromStatus = existing.status;
+
+      if (fromStatus === toStatus) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: { code: 'INVALID_TRANSITION', message: `Complaint is already ${fromStatus}` },
+        });
+      }
+      if (!VALID_TRANSITIONS[fromStatus].includes(toStatus)) {
+        await client.query('ROLLBACK');
+        const message = fromStatus === 'Resolved'
+          ? 'A resolved complaint is closed and cannot be changed further'
+          : `Cannot transition from ${fromStatus} to ${toStatus}`;
+        return res.status(400).json({ error: { code: 'INVALID_TRANSITION', message } });
+      }
+
+      const { rows: updatedRows } = await client.query(
+        `UPDATE complaints
+         SET status = $1, resolved_at = CASE WHEN $1 = 'Resolved' THEN now() ELSE resolved_at END
+         WHERE id = $2
+         RETURNING id, resident_id, category, description, photo_url, priority, status, created_at, resolved_at`,
+        [toStatus, id],
+      );
+
+      await client.query(
+        `INSERT INTO complaint_status_history (complaint_id, from_status, to_status, actor_id, note)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [id, fromStatus, toStatus, req.user.id, note || null],
+      );
+
+      await client.query('COMMIT');
+      res.json({ complaint: updatedRows[0] });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function updatePriority(req, res, next) {
   try {
     const { id } = req.params;
@@ -116,4 +209,4 @@ async function updatePriority(req, res, next) {
   }
 }
 
-module.exports = { listComplaints, updatePriority };
+module.exports = { listComplaints, updatePriority, updateStatus };

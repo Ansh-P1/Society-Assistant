@@ -131,17 +131,19 @@ Resident-only. Lists the logged-in resident's own complaints, newest first.
 
 ### `GET /api/complaints/:id`
 
-Resident-only. Returns one complaint plus its complete
+Resident or admin. Returns one complaint plus its complete
 `complaint_status_history` timeline, oldest entry first — the full audit
 trail described in `.claude/skills/complaint-lifecycle/SKILL.md`. A
-resident may only fetch their own complaints.
+resident may only fetch their own complaints; an admin may fetch any
+complaint (this is what backs the admin complaint detail view). The
+response also includes `resident_name` (joined from `users`).
 
-- **Auth:** resident
+- **Auth:** resident or admin
 - **Success response `200`:**
   ```json
   {
     "complaint": {
-      "id": 2, "resident_id": 3, "category": "Electrical",
+      "id": 2, "resident_id": 3, "resident_name": "Ravi Mehta", "category": "Electrical",
       "description": "Common area light on 3rd floor not working.",
       "photo_url": null, "priority": "Low", "status": "In Progress",
       "created_at": "2026-08-22T09:00:00.000Z", "resolved_at": null
@@ -162,7 +164,8 @@ resident may only fetch their own complaints.
   ```
 - **Errors:**
   - `400 VALIDATION_ERROR` — `:id` isn't numeric
-  - `403 FORBIDDEN` — the complaint exists but belongs to a different resident
+  - `403 FORBIDDEN` — a resident requesting a complaint that isn't theirs
+    (does not apply to admins)
   - `404 NOT_FOUND` — no complaint with that id exists
   - `401 UNAUTHORIZED` — see shared auth errors above
 
@@ -234,7 +237,54 @@ changes, priority changes are not recorded in `complaint_status_history`
   - `404 NOT_FOUND` — no complaint with that id exists
   - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
 
+### `PATCH /api/admin/complaints/:id/status`
+
+Transitions a complaint's status, enforcing the rules in
+`.claude/skills/complaint-lifecycle/SKILL.md` strictly:
+
+- Valid transitions: `Open -> In Progress`, `In Progress -> Resolved`, and
+  `Open -> Resolved` (a direct resolve is allowed — no intermediate step is
+  required).
+- Invalid transitions are rejected with `400 INVALID_TRANSITION`, never
+  silently ignored: skipping backwards (`In Progress -> Open`,
+  `Resolved -> In Progress`, `Resolved -> Open`), any transition out of
+  `Resolved` (it's closed permanently — no reopening), and setting
+  `to_status` to the complaint's current status (no-op).
+- On success, inserts a new `complaint_status_history` row
+  (`from_status`, `to_status`, `actor_id` = the admin, `note`, `changed_at`)
+  and updates `complaints.status` in the same transaction (the row is
+  `SELECT ... FOR UPDATE`-locked first, so two concurrent updates on the
+  same complaint can't both apply against the same `from_status`).
+- When `to_status` is `"Resolved"`, `complaints.resolved_at` is set to
+  `now()` in the same update.
+
+- **Auth:** admin
+- **Request body:**
+  ```json
+  { "to_status": "In Progress", "note": "Plumber scheduled" }
+  ```
+  `note` is optional.
+- **Success response `200`:**
+  ```json
+  {
+    "complaint": {
+      "id": 1, "resident_id": 3, "category": "Plumbing",
+      "description": "Kitchen sink is leaking continuously.",
+      "photo_url": null, "priority": "Low", "status": "In Progress",
+      "created_at": "2026-08-10T09:00:00.000Z", "resolved_at": null
+    }
+  }
+  ```
+- **Errors:**
+  - `400 VALIDATION_ERROR` — `:id` isn't numeric, `to_status` isn't one of
+    `Open`, `In Progress`, `Resolved`, or `note` isn't a string
+  - `400 INVALID_TRANSITION` — the transition isn't allowed (see above);
+    the message says specifically why (e.g. "A resolved complaint is
+    closed and cannot be changed further")
+  - `404 NOT_FOUND` — no complaint with that id exists
+  - `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
 ---
 
-Further endpoints (complaint/notice status updates, notice board, dashboard)
-are documented here as they are built.
+Further endpoints (notice board, dashboard) are documented here as they
+are built.

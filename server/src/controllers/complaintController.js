@@ -113,7 +113,11 @@ async function getById(req, res, next) {
     }
 
     const complaintResult = await pool.query(
-      `SELECT ${COMPLAINT_COLUMNS} FROM complaints WHERE id = $1`,
+      `SELECT c.id, c.resident_id, u.name AS resident_name, c.category, c.description,
+              c.photo_url, c.priority, c.status, c.created_at, c.resolved_at
+       FROM complaints c
+       JOIN users u ON u.id = c.resident_id
+       WHERE c.id = $1`,
       [id],
     );
     const complaint = complaintResult.rows[0];
@@ -123,7 +127,8 @@ async function getById(req, res, next) {
         error: { code: 'NOT_FOUND', message: 'Complaint not found' },
       });
     }
-    if (complaint.resident_id !== req.user.id) {
+    // Admins can view any complaint; residents only their own.
+    if (req.user.role !== 'admin' && complaint.resident_id !== req.user.id) {
       return res.status(403).json({
         error: { code: 'FORBIDDEN', message: 'You do not have access to this complaint' },
       });

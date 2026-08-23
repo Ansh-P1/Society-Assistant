@@ -83,3 +83,11 @@ export function getAdminComplaints(filters, token) {
 export function updateComplaintPriority(id, priority, token) {
   return request(`/api/admin/complaints/${id}/priority`, { method: 'PATCH', body: { priority }, token });
 }
+
+export function updateComplaintStatus(id, toStatus, note, token) {
+  return request(`/api/admin/complaints/${id}/status`, {
+    method: 'PATCH',
+    body: { to_status: toStatus, note },
+    token,
+  });
+}

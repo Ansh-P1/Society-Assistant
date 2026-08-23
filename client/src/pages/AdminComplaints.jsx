@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getAdminComplaints, updateComplaintPriority } from '../api/client';
 import { getAuth } from '../utils/auth';
 import { CATEGORIES } from '../constants/categories';
@@ -105,7 +106,9 @@ function AdminComplaints() {
           <tbody>
             {complaints.map((complaint) => (
               <tr key={complaint.id} className={complaint.is_overdue ? 'overdue-row' : ''}>
-                <td>{complaint.category}</td>
+                <td>
+                  <Link to={`/admin/complaints/${complaint.id}`}>{complaint.category}</Link>
+                </td>
                 <td>{complaint.resident_name}</td>
                 <td>
                   <span className={statusClass(complaint.status)}>{complaint.status}</span>

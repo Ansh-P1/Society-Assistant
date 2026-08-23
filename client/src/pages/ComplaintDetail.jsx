@@ -2,13 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getComplaint, API_URL } from '../api/client';
 import { getAuth } from '../utils/auth';
+import StatusTimeline from '../components/StatusTimeline';
 
 function statusClass(status) {
   return `status status-${status.replace(/\s+/g, '-').toLowerCase()}`;
-}
-
-function describeChange(entry) {
-  return entry.from_status ? `${entry.from_status} → ${entry.to_status}` : `Raised as ${entry.to_status}`;
 }
 
 function ComplaintDetail() {
@@ -77,16 +74,7 @@ function ComplaintDetail() {
           )}
 
           <h2>Status timeline</h2>
-          <ul className="timeline">
-            {history.map((entry) => (
-              <li key={entry.id}>
-                <span className="timeline-date">{new Date(entry.changed_at).toLocaleString()}</span>
-                <span className="timeline-change">{describeChange(entry)}</span>
-                {entry.actor_name && <span className="timeline-actor">by {entry.actor_name}</span>}
-                {entry.note && <p className="timeline-note">{entry.note}</p>}
-              </li>
-            ))}
-          </ul>
+          <StatusTimeline history={history} />
         </>
       )}
     </div>
