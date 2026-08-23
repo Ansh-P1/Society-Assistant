@@ -3,6 +3,26 @@
 See `.claude/skills/api-conventions/SKILL.md` for the conventions (endpoint
 naming, auth, error shape, pagination) that every endpoint below follows.
 
+## All endpoints at a glance
+
+| Method | Path                                    | Auth               |
+|--------|------------------------------------------|---------------------|
+| GET    | `/api/health`                            | none                |
+| POST   | `/api/auth/register`                     | none                |
+| POST   | `/api/auth/login`                        | none                |
+| POST   | `/api/complaints`                        | resident            |
+| GET    | `/api/complaints/mine`                   | resident            |
+| GET    | `/api/complaints/:id`                    | resident or admin   |
+| GET    | `/api/admin/complaints`                  | admin               |
+| GET    | `/api/admin/complaints/overdue-count`    | admin               |
+| PATCH  | `/api/admin/complaints/:id/priority`     | admin               |
+| PATCH  | `/api/admin/complaints/:id/status`       | admin               |
+| GET    | `/api/admin/settings`                    | admin               |
+| PATCH  | `/api/admin/settings`                    | admin               |
+| GET    | `/api/admin/dashboard`                   | admin               |
+| POST   | `/api/notices`                           | admin               |
+| GET    | `/api/notices`                           | resident or admin   |
+
 ## Health
 
 ### `GET /api/health`
@@ -214,8 +234,9 @@ default, then by most recently created.
 ### `GET /api/admin/complaints/overdue-count`
 
 Convenience endpoint — just the count, using the same live threshold and
-`status != 'Resolved'` logic as `is_overdue` above. Intended for the admin
-dashboard (a future prompt), so it doesn't need the full listing payload.
+`status != 'Resolved'` logic as `is_overdue` above (the same shared helper
+also backs `GET /api/admin/dashboard`'s `overdue_count`, so the two can
+never disagree), for callers that don't need the full listing payload.
 
 - **Auth:** admin
 - **Success response `200`:**
@@ -413,5 +434,6 @@ the board. Important notices are pinned to the top; within each group
 
 ---
 
-Further endpoints (dashboard, email notifications) are documented here as
-they are built.
+This covers every endpoint currently implemented. New endpoints get a
+section here in the same change that adds them, per
+`.claude/skills/project-docs/SKILL.md`.

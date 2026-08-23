@@ -13,10 +13,18 @@ informed via a notice board and email updates.
   the append-only status-history model and overdue-detection queries (see
   `.claude/skills/complaint-lifecycle` and `.claude/skills/db-schema`) can be
   written as explicit SQL/migrations without an ORM abstracting over the
-  append-only constraint.
-- **Frontend:** React, scaffolded with [Vite](https://vitejs.dev/)
+  append-only constraint. Migrations are plain numbered `.sql` files, applied
+  by a small custom runner (`server/src/db/migrate.js`) rather than a
+  migration framework — there was never a need for anything heavier.
+- **Frontend:** React, scaffolded with [Vite](https://vitejs.dev/), routed
+  with `react-router-dom`. Pinned to Vite 5 (not the `@latest` at scaffold
+  time) — Vite 8's default rolldown bundler has no prebuilt native binding
+  for this Windows/Node combination and crashed on build; Vite 5's classic
+  Rollup-based bundler doesn't have that problem.
 - **Auth:** JWT-based, role-guarded for `resident` vs `admin` (see
-  `.claude/skills/api-conventions`)
+  `.claude/skills/api-conventions`). Passwords hashed with `bcryptjs`.
+- **Photo uploads:** `multer`, storing to local disk in development — see
+  [Photo storage](#photo-storage) below for what changes before production.
 - **Email:** [Nodemailer](https://nodemailer.com/) over plain SMTP (not a
   provider-specific SDK), so any SMTP-capable free-tier provider works -
   see [`docs/EMAIL_SETUP.md`](docs/EMAIL_SETUP.md) for how to get
@@ -26,59 +34,167 @@ informed via a notice board and email updates.
 ## Project structure
 
 ```
-/server   Express API (src/app.js, src/index.js, src/config, src/db, src/routes)
-/client   React app (Vite)
+/server
+  migrations/            Numbered SQL migrations, applied in filename order
+  src/
+    app.js               Express app: middleware + route mounting
+    index.js             Entry point - starts the HTTP server
+    config/              Reads and validates env vars
+    constants/            Shared value lists (categories, statuses, priorities)
+    controllers/          One file per resource - request handling + validation
+    db/
+      index.js            pg Pool connection
+      migrate.js           Migration runner (tracks applied migrations)
+      seed.js              Seeds an admin + 2 residents + 3 sample complaints
+    middleware/            authenticate, requireRole, upload (multer), errorHandler
+    routes/                One file per resource - maps HTTP verbs to controllers
+    services/               settingsService (overdue threshold), emailService
+    utils/                  validation.js (email/password format checks)
+  uploads/                Uploaded complaint photos (gitignored, created at runtime)
+
+/client
+  src/
+    api/client.js         Thin fetch wrapper - one exported function per endpoint
+    components/            Shared UI (ProtectedRoute, StatusTimeline)
+    constants/              Mirrors server/src/constants (categories, statuses)
+    pages/                  One file per route/screen
+    utils/auth.js          localStorage helpers for the JWT + logged-in user
+    App.jsx                Route definitions
+    main.jsx                Entry point - mounts <App /> inside <BrowserRouter>
+
+/docs
+  API.md                  Endpoint reference
+  SCHEMA.md               Database schema reference + ER diagram
+  EMAIL_SETUP.md          How to configure email notifications
+
+/.claude/skills           Project-specific conventions Claude follows when
+                          extending this codebase (complaint lifecycle rules,
+                          API conventions, DB schema conventions, doc structure)
 ```
 
 ## Setup
 
-Prerequisites: Node.js 22+, a running local PostgreSQL instance.
+### Prerequisites
 
-### Backend
+- Node.js 22.x and npm (Vite 5 also supports Node 20.19+, if that's what's
+  available instead)
+- PostgreSQL 14+ running somewhere reachable (local install, Docker, or a
+  hosted free tier like Railway/Supabase/Neon)
+- git
+
+### 1. Clone and install
+
+```bash
+git clone <this-repo-url>
+cd "Unthinkable project"
+
+cd server && npm install
+cd ../client && npm install
+```
+
+### 2. Configure environment variables
 
 ```bash
 cd server
-npm install
-cp .env.example .env   # fill in DB_URL, JWT_SECRET, EMAIL_*, etc.
-npm run dev             # starts on PORT (default 4000)
+cp .env.example .env
 ```
 
-Verify it's up: `GET http://localhost:4000/api/health` should return
-`{ "status": "ok" }`.
+Edit `server/.env`:
 
-### Frontend
+- `DB_URL` — your PostgreSQL connection string
+- `JWT_SECRET` — any random string (used to sign auth tokens)
+- `PORT` — defaults to `4000`, change if that's taken
+- `EMAIL_*` — optional for local dev (see below); leave the placeholders
+  and the app runs fine, it just skips sending email and logs why
 
 ```bash
-cd client
-npm install
-cp .env.example .env   # VITE_API_URL, defaults to http://localhost:4000
-npm run dev             # starts the Vite dev server
+cd ../client
+cp .env.example .env
 ```
+
+`client/.env`'s only variable, `VITE_API_URL`, already defaults to
+`http://localhost:4000` — only change it if the backend runs somewhere else.
+
+Email is optional but easy to turn on — see
+[`docs/EMAIL_SETUP.md`](docs/EMAIL_SETUP.md) for a Gmail app password
+(recommended, no third-party signup) or another free SMTP provider.
+
+### 3. Set up the database
+
+With `DB_URL` pointing at an empty database:
+
+```bash
+cd server
+npm run migrate   # creates all tables
+npm run seed      # optional: adds 1 admin + 2 residents + 3 sample complaints
+```
+
+The seed script prints the shared password for all seeded accounts
+(`password123`). The seeded logins:
+
+| Email                  | Role     |
+|-------------------------|----------|
+| `admin@society.test`    | admin    |
+| `asha@society.test`     | resident |
+| `ravi@society.test`     | resident |
+
+(Or skip seeding and register your own resident account through the app —
+`POST /api/auth/register` / the Register page. Admin accounts are seed-only,
+there's no self-registration path for them, by design.)
+
+### 4. Run it
+
+In two separate terminals:
+
+```bash
+cd server && npm run dev    # http://localhost:4000
+cd client && npm run dev    # http://localhost:5173
+```
+
+Verify the backend is up: `GET http://localhost:4000/api/health` should
+return `{ "status": "ok" }`. Then open `http://localhost:5173` and log in
+with one of the seeded accounts above (or register a new resident).
 
 ## Docs
 
-- [`docs/API.md`](docs/API.md) — API endpoint reference
-- [`docs/SCHEMA.md`](docs/SCHEMA.md) — database schema reference
+- [`docs/API.md`](docs/API.md) — every endpoint: method, path, auth,
+  request body, response shape, error codes
+- [`docs/SCHEMA.md`](docs/SCHEMA.md) — database schema reference, including
+  an ER diagram of how the tables relate
 - [`docs/EMAIL_SETUP.md`](docs/EMAIL_SETUP.md) — how to configure email
   notifications
 
 ## Features
 
-- Resident registration/login, admin login (JWT-based, role-guarded)
-- Residents can raise a complaint (category, description, optional photo),
-  view their own complaints, and see each one's full status history
-- Admin can list/filter all complaints (status, category, date range), set
-  priority, and transition status (`Open` → `In Progress` → `Resolved`,
-  enforced strictly — see `.claude/skills/complaint-lifecycle`)
-- Overdue detection with an admin-configurable threshold (`/admin/settings`)
-  — overdue complaints sort to the top of the admin list
-- Notice board, readable by both roles; admins can post notices and pin
-  important ones to the top
-- Email notifications (see `docs/EMAIL_SETUP.md`): residents are emailed
-  when their complaint's status changes, and when an admin posts an
-  important notice
-- Admin dashboard: complaint counts by status and category, plus the
-  overdue count, as simple stat cards
+**Auth**
+- Resident self-registration and login; admin login (admin accounts are
+  seed-only — see Setup above). JWT-based, role-guarded throughout.
+
+**Resident**
+- Raise a complaint: category, description, optional photo
+- View their own complaints, and each one's full status history timeline
+- Read the notice board
+
+**Admin**
+- List and filter all complaints (by status, category, date range),
+  paginated
+- Set a complaint's priority (`Low`/`Medium`/`High`)
+- Transition a complaint's status (`Open` → `In Progress` → `Resolved`,
+  or `Open` → `Resolved` directly) with strictly enforced transition rules
+  (no skipping backwards, nothing reopens a `Resolved` complaint) — see
+  `.claude/skills/complaint-lifecycle`. Every change is recorded in an
+  append-only history table with a timestamp, actor, and optional note.
+- Configure the overdue-complaint threshold at runtime (`/admin/settings`)
+  — overdue complaints are flagged and sorted to the top of the admin list,
+  no redeploy needed to change the threshold
+- Post notices to the board, optionally pinned as important
+- Dashboard: complaint counts by status, by category, and the overdue count
+
+**Notifications**
+- Residents are emailed when their complaint's status changes, and when an
+  admin posts an important notice (see `docs/EMAIL_SETUP.md`) — sent
+  fire-and-forget, so a misconfigured or down mail provider never breaks
+  the underlying request
 
 ### Photo storage
 

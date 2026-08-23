@@ -45,10 +45,11 @@ same transaction.
 | `resolved_at`    | `TIMESTAMPTZ`                      | nullable - set when status becomes `Resolved` |
 
 **Indexes:** `status`, `category`, `created_at` - these are the fields the
-admin view filters and sorts on (see `.claude/skills/db-schema` for
-additional indexes recommended once resident-scoped queries and the
-complaint history/notice-board endpoints are built: `resident_id`, a
-composite `(status, created_at)`, and `notices(is_important, created_at)`).
+admin view (`GET /api/admin/complaints`) filters and sorts on. Not yet
+added, but worth it if row counts grow: `resident_id` (every
+`GET /api/complaints/mine` query filters on it) and a composite
+`(status, created_at)` (the admin view's actual filter+sort combination) -
+see `.claude/skills/db-schema`.
 
 ## complaint_status_history
 
@@ -112,3 +113,74 @@ it at runtime via `PATCH /api/admin/settings` without a redeploy.
 | `updated_at`                | `TIMESTAMPTZ NOT NULL DEFAULT now()` | set on every `PATCH` - unlike the append-only tables above, this row is genuinely updated in place |
 
 **Indexes:** none - a single-row table never benefits from one.
+
+## Entity relationships
+
+```
++------------------+
+|      users       |
++------------------+
+| id (PK)          |
+| name             |
+| email (unique)   |
+| password_hash    |
+| role             |
+| created_at       |
++------------------+
+
++--------------------------------+
+|           complaints           |
++--------------------------------+
+| id (PK)                        |
+| resident_id (FK -> users.id)   |
+| category                       |
+| description                    |
+| photo_url                      |
+| priority                       |
+| status                         |
+| created_at                     |
+| resolved_at                    |
++--------------------------------+
+
++--------------------------------------+
+|       complaint_status_history       |
++--------------------------------------+
+| id (PK)                              |
+| complaint_id (FK -> complaints.id)   |
+| from_status                          |
+| to_status                            |
+| actor_id (FK -> users.id)            |
+| note                                 |
+| changed_at                           |
++--------------------------------------+
+
++-----------------------------+
+|           notices           |
++-----------------------------+
+| id (PK)                     |
+| admin_id (FK -> users.id)   |
+| title                       |
+| body                        |
+| is_important                |
+| posted_at                   |
++-----------------------------+
+
++--------------------------+
+|         settings         |
++--------------------------+
+| id (PK, always 1)        |
+| overdue_threshold_days   |
+| created_at               |
+| updated_at               |
++--------------------------+
+```
+
+**Relationships** (all `users.id` references, one-to-many):
+
+- `users (1) ──< complaints.resident_id (N)` — a resident can raise many complaints
+- `complaints (1) ──< complaint_status_history.complaint_id (N)` — every status
+  change is a new row (append-only); a complaint's creation is the first one
+- `users (1) ──< complaint_status_history.actor_id (N)` — the resident or
+  admin who made each change; a user can be the actor on many history rows
+- `users (1) ──< notices.admin_id (N)` — an admin can post many notices
+- `settings` has no foreign keys — a standalone singleton row (`id = 1`)
