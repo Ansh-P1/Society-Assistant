@@ -4,6 +4,8 @@ import Register from './pages/Register';
 import ResidentDashboard from './pages/ResidentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import NewComplaint from './pages/NewComplaint';
+import MyComplaints from './pages/MyComplaints';
+import ComplaintDetail from './pages/ComplaintDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -22,10 +24,26 @@ function App() {
         }
       />
       <Route
+        path="/complaints"
+        element={
+          <ProtectedRoute role="resident">
+            <MyComplaints />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/complaints/new"
         element={
           <ProtectedRoute role="resident">
             <NewComplaint />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/complaints/:id"
+        element={
+          <ProtectedRoute role="resident">
+            <ComplaintDetail />
           </ProtectedRoute>
         }
       />

@@ -15,9 +15,9 @@ function ResidentDashboard() {
       <h1>Resident dashboard</h1>
       <p>Welcome, {auth?.user?.name}.</p>
       <p>
-        <Link to="/complaints/new">Raise a complaint</Link>
+        <Link to="/complaints/new">Raise a complaint</Link> ·{' '}
+        <Link to="/complaints">My complaints</Link>
       </p>
-      <p>Complaint tracking is coming in a future update.</p>
       <button onClick={handleLogout}>Log out</button>
     </div>
   );

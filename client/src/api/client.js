@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 async function parseResponse(response) {
   const data = await response.json().catch(() => null);
@@ -59,4 +59,12 @@ export function createComplaint({ category, description, photo }, token) {
   }
 
   return requestFormData('/api/complaints', { method: 'POST', body: formData, token });
+}
+
+export function getMyComplaints(token) {
+  return request('/api/complaints/mine', { token });
+}
+
+export function getComplaint(id, token) {
+  return request(`/api/complaints/${id}`, { token });
 }

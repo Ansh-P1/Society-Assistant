@@ -107,7 +107,66 @@ and served statically at `/uploads/<filename>`. This is a development-only
 choice — see the "Photo storage" note in the root README for what changes
 before production.
 
+### `GET /api/complaints/mine`
+
+Resident-only. Lists the logged-in resident's own complaints, newest first.
+
+- **Auth:** resident
+- **Query params:** `page` (default `1`), `limit` (default `20`, max `100`)
+- **Success response `200`:**
+  ```json
+  {
+    "data": [
+      {
+        "id": 2, "resident_id": 3, "category": "Electrical",
+        "description": "Common area light on 3rd floor not working.",
+        "photo_url": null, "priority": "Low", "status": "In Progress",
+        "created_at": "2026-08-22T09:00:00.000Z", "resolved_at": null
+      }
+    ],
+    "pagination": { "page": 1, "limit": 20, "total": 1, "totalPages": 1 }
+  }
+  ```
+- **Errors:** `401 UNAUTHORIZED` / `403 FORBIDDEN` — see shared auth errors above
+
+### `GET /api/complaints/:id`
+
+Resident-only. Returns one complaint plus its complete
+`complaint_status_history` timeline, oldest entry first — the full audit
+trail described in `.claude/skills/complaint-lifecycle/SKILL.md`. A
+resident may only fetch their own complaints.
+
+- **Auth:** resident
+- **Success response `200`:**
+  ```json
+  {
+    "complaint": {
+      "id": 2, "resident_id": 3, "category": "Electrical",
+      "description": "Common area light on 3rd floor not working.",
+      "photo_url": null, "priority": "Low", "status": "In Progress",
+      "created_at": "2026-08-22T09:00:00.000Z", "resolved_at": null
+    },
+    "history": [
+      {
+        "id": 4, "from_status": null, "to_status": "Open",
+        "actor_id": 3, "actor_name": "Ravi Mehta",
+        "note": "Complaint raised", "changed_at": "2026-08-22T09:00:00.000Z"
+      },
+      {
+        "id": 5, "from_status": "Open", "to_status": "In Progress",
+        "actor_id": 2, "actor_name": "Admin User",
+        "note": "Electrician scheduled", "changed_at": "2026-08-22T15:00:00.000Z"
+      }
+    ]
+  }
+  ```
+- **Errors:**
+  - `400 VALIDATION_ERROR` — `:id` isn't numeric
+  - `403 FORBIDDEN` — the complaint exists but belongs to a different resident
+  - `404 NOT_FOUND` — no complaint with that id exists
+  - `401 UNAUTHORIZED` — see shared auth errors above
+
 ---
 
-Further endpoints (complaint listing/status updates, notices, dashboard) are
-documented here as they are built.
+Further endpoints (complaint/notice status updates, notice board, dashboard)
+are documented here as they are built.
