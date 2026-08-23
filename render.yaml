@@ -49,11 +49,16 @@ services:
       - key: NODE_VERSION
         value: 22.11.0
       # Vite bakes this into the built JS at build time, so it must be set
-      # here (not just in client/.env, which never reaches Render). Update
-      # this if Render assigns society-tracker-api a different subdomain
-      # (e.g. on a name collision), then trigger a redeploy of this service.
+      # here (not just in client/.env, which never reaches Render). The
+      # api service's name collided on first deploy and Render assigned it
+      # the "-43az" suffix - this must match its actual live URL exactly,
+      # or every request fails as a CORS error (the built JS calls the
+      # wrong origin entirely, so the browser blocks it before the request
+      # even reaches the API). If the API's URL ever changes again, update
+      # this and trigger a redeploy of this service - editing the env var
+      # alone does nothing until the JS is rebuilt.
       - key: VITE_API_URL
-        value: https://society-tracker-api.onrender.com
+        value: https://society-tracker-api-43az.onrender.com
     routes:
       # React Router client-side routing - every path serves index.html so
       # deep links (e.g. /admin/complaints/5) and page refreshes don't 404.
