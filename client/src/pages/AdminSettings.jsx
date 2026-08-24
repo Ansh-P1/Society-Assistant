@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { getAdminSettings, updateAdminSettings } from '../api/client';
 import { getAuth } from '../utils/auth';
+import Navbar from '../components/Navbar';
 
 function AdminSettings() {
   const auth = getAuth();
@@ -55,11 +55,10 @@ function AdminSettings() {
   }
 
   return (
-    <div className="form-page">
+    <>
+      <Navbar />
+      <div className="page-content form-page">
       <h1>Settings</h1>
-      <p>
-        <Link to="/admin">Back to dashboard</Link>
-      </p>
 
       {loading && <p>Loading…</p>}
       {error && <p className="form-error">{error}</p>}
@@ -88,7 +87,8 @@ function AdminSettings() {
           </button>
         </form>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

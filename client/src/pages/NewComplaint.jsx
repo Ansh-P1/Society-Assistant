@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { createComplaint } from '../api/client';
 import { getAuth } from '../utils/auth';
 import { CATEGORIES } from '../constants/categories';
+import Navbar from '../components/Navbar';
 
 const MAX_DESCRIPTION_LENGTH = 2000;
 
@@ -35,47 +35,47 @@ function NewComplaint() {
   }
 
   return (
-    <div className="form-page">
-      <h1>Raise a complaint</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Category
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {CATEGORIES.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Description
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            maxLength={MAX_DESCRIPTION_LENGTH}
-            rows={5}
-            required
-          />
-        </label>
-        <label>
-          Photo (optional)
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(e) => setPhoto(e.target.files[0] || null)}
-          />
-        </label>
-        {error && <p className="form-error">{error}</p>}
-        {success && <p className="form-success">Complaint raised successfully.</p>}
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Submitting…' : 'Submit complaint'}
-        </button>
-      </form>
-      <p>
-        <Link to="/resident">Back to dashboard</Link>
-      </p>
-    </div>
+    <>
+      <Navbar />
+      <div className="page-content form-page">
+        <h1>Raise a complaint</h1>
+        <form onSubmit={handleSubmit}>
+          <label>
+            Category
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {CATEGORIES.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Description
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={MAX_DESCRIPTION_LENGTH}
+              rows={5}
+              required
+            />
+          </label>
+          <label>
+            Photo (optional)
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => setPhoto(e.target.files[0] || null)}
+            />
+          </label>
+          {error && <p className="form-error">{error}</p>}
+          {success && <p className="form-success">Complaint raised successfully.</p>}
+          <button type="submit" disabled={submitting}>
+            {submitting ? 'Submitting…' : 'Submit complaint'}
+          </button>
+        </form>
+      </div>
+    </>
   );
 }
 

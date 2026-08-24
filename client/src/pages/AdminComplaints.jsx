@@ -4,6 +4,7 @@ import { getAdminComplaints, updateComplaintPriority } from '../api/client';
 import { getAuth } from '../utils/auth';
 import { CATEGORIES } from '../constants/categories';
 import { STATUSES, PRIORITIES } from '../constants/statuses';
+import Navbar from '../components/Navbar';
 
 function statusClass(status) {
   return `status status-${status.replace(/\s+/g, '-').toLowerCase()}`;
@@ -50,8 +51,10 @@ function AdminComplaints() {
   }
 
   return (
-    <div className="admin-page">
-      <h1>All complaints</h1>
+    <>
+      <Navbar />
+      <div className="page-content admin-page">
+        <h1>All complaints</h1>
 
       <div className="filters">
         <label>
@@ -131,8 +134,9 @@ function AdminComplaints() {
             ))}
           </tbody>
         </table>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }
 

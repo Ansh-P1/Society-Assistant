@@ -4,6 +4,7 @@ import { getComplaint, updateComplaintStatus, API_URL } from '../api/client';
 import { getAuth } from '../utils/auth';
 import StatusTimeline from '../components/StatusTimeline';
 import { VALID_STATUS_TRANSITIONS } from '../constants/statuses';
+import Navbar from '../components/Navbar';
 
 function statusClass(status) {
   return `status status-${status.replace(/\s+/g, '-').toLowerCase()}`;
@@ -70,9 +71,11 @@ function AdminComplaintDetail() {
   const nextOptions = complaint ? VALID_STATUS_TRANSITIONS[complaint.status] : [];
 
   return (
-    <div className="detail-page">
+    <>
+      <Navbar />
+      <div className="page-content detail-page">
       <p>
-        <Link to="/admin/complaints">Back to all complaints</Link>
+        <Link to="/admin/complaints">← Back to all complaints</Link>
       </p>
 
       {loading && <p>Loading…</p>}
@@ -130,7 +133,8 @@ function AdminComplaintDetail() {
           <StatusTimeline history={history} />
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
