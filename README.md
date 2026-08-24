@@ -163,6 +163,9 @@ with one of the seeded accounts above (or register a new resident).
   an ER diagram of how the tables relate
 - [`docs/EMAIL_SETUP.md`](docs/EMAIL_SETUP.md) — how to configure email
   notifications
+- [`docs/SYSTEM_DESIGN.md`](docs/SYSTEM_DESIGN.md) — design write-up on the
+  complaint history model, overdue detection, photo handling, and
+  notification flow
 
 ## Features
 
