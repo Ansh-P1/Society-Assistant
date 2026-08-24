@@ -124,11 +124,15 @@ a:hover {
 }
 
 .navbar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--color-text-muted);
   font-weight: 600;
   font-size: 0.92rem;
   padding: 0.5rem 0.9rem;
   border-radius: var(--radius-pill);
+  transition: color 150ms ease, background-color 150ms ease;
 }
 
 .navbar-link:hover {
@@ -155,6 +159,9 @@ a:hover {
 }
 
 .navbar-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);
@@ -164,6 +171,7 @@ a:hover {
   padding: 0.5rem 1.1rem;
   border-radius: var(--radius-pill);
   cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
 }
 
 .navbar-logout:hover {
@@ -674,6 +682,18 @@ a:hover {
   border-top: 1px solid var(--color-border);
 }
 
+.admin-table tbody tr {
+  transition: background-color 120ms ease;
+}
+
+.admin-table tbody tr:hover {
+  background: var(--color-bg-subtle);
+}
+
+.admin-table tbody tr.overdue-row:hover {
+  background: #fbdcd9;
+}
+
 .admin-table select {
   padding: 0.4rem 0.6rem;
   font-size: 0.85rem;
@@ -686,6 +706,12 @@ a:hover {
 .overdue-row td:last-child {
   color: var(--color-danger);
   font-weight: 700;
+}
+
+.overdue-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 /* ==========================================================================
@@ -797,6 +823,9 @@ a:hover {
 }
 
 .notice-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--color-text-muted);
   font-size: 0.85rem;
   margin: 0 0 0.6rem;
@@ -837,12 +866,25 @@ a:hover {
 .quick-link-card:hover {
   box-shadow: var(--shadow-card-hover);
   border-color: var(--color-primary-border);
-  transform: translateY(-2px);
   color: inherit;
 }
 
 .quick-link-icon {
-  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  margin-bottom: 0.4rem;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.quick-link-card:hover .quick-link-icon {
+  background: var(--color-primary);
+  color: #fff;
 }
 
 .quick-link-title {
@@ -854,4 +896,152 @@ a:hover {
 .quick-link-desc {
   color: var(--color-text-muted);
   font-size: 0.88rem;
+}
+
+/* ==========================================================================
+   Page banner - photo header used on dashboards, complaints, notice board
+   (same photo/theme as the auth pages, per design brief)
+   ========================================================================== */
+
+.page-banner {
+  position: relative;
+  background-image: url('/page-banner.jpg');
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 2rem;
+}
+
+.page-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(30, 58, 138, 0.93) 0%, rgba(37, 99, 235, 0.8) 100%);
+}
+
+.page-banner-content {
+  position: relative;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.page-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.page-banner-content h1 {
+  color: #fff;
+  font-size: 1.6rem;
+  margin-bottom: 0.2rem;
+}
+
+.page-banner-content p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+/* Pages using a banner render their content below it without the old
+   heading, so this trims the redundant top spacing page-content otherwise adds. */
+.page-banner + .page-content {
+  padding-top: 0;
+}
+
+/* ==========================================================================
+   Empty states
+   ========================================================================== */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 3.5rem 2rem;
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.empty-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  margin-bottom: 0.25rem;
+}
+
+.empty-state-title {
+  font-weight: 700;
+  color: var(--color-text-strong);
+  margin: 0;
+}
+
+.empty-state-desc {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 24rem;
+}
+
+/* ==========================================================================
+   Section header row (title + action button, used above lists/tables)
+   ========================================================================== */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h1 {
+  margin: 0;
+}
+
+.btn-primary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition: background-color 150ms ease;
+}
+
+.btn-primary-link:hover {
+  background: var(--color-primary-hover);
+  color: #fff;
+}
+
+/* ==========================================================================
+   Icon touches on existing components (status pills, notice badges)
+   ========================================================================== */
+
+.status,
+.notice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
